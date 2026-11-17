@@ -275,8 +275,29 @@ function go(id){
   if(!SCREENS[id]){ alert("未実装の画面です: "+id); return; }
   stack.push(id); render();
 }
+// 遷移図で一方通行の流れ（チェーン）の中の画面．戻るボタンでは戻れない（チェーンの先頭まで飛ぶ）
+const FLOW = new Set([
+  "s_regdone","s_pconsent","s_regcomp",
+  "s_answer","s_ansdone","s_reflect","s_procview","s_procpost","s_postdone",
+  "s_quizans","s_quizdone","s_knowview","s_reportchk","s_reportdone",
+  "s_reclist","s_edit","s_agenthist","s_qr","s_chgdone","s_inqdone",
+  "p_qr","p_confirm","p_regdone","p_selunit","p_progress","p_consentsel","p_addchild","p_unlinkdone",
+  "t_unit","t_tmpl","t_search","t_searchres","t_qconfirm","t_provdetail","t_provdone",
+  "t_classdetail","t_stusearch","t_classsetdone","t_statusdetail","t_noticedetail",
+  "a_members","a_memberdetail","a_stop","a_posts","a_postdetail","a_reportdetail",
+  "a_qbank","a_qedit","a_noticeedit"
+]);
 function back(){
-  if(stack.length > 1){ stack.pop(); render(); }
+  if(stack.length <= 1) return;
+  stack.pop();
+  while(stack.length > 1 && FLOW.has(stack[stack.length - 1])) stack.pop();
+  render();
+}
+function fixBack(){                                   // 問題確認の「直す」：流れの中の直前の作業画面へ
+  const dest = S.qFrom || "t_tmpl";
+  stack.pop();
+  if(stack[stack.length - 1] !== dest) stack.push(dest);
+  render();
 }
 function jump(id){ stack = [id]; render(); }           // 履歴をリセットして移動（ログイン等）
 function finishTo(id){                              // 完了画面から出る時：完了画面を履歴に残さない
@@ -720,7 +741,10 @@ def("p_confirm","対象生徒の確認","保護者",`
 `);
 def("p_regdone","登録完了","保護者",()=>doneScr("🎉","登録と連携ができました","子供の学習の様子が見られるようになりました．","ホームへ","p_home"));
 def("p_home","保護者ホーム","保護者",`
-  <div class="card"><h2>👪 連携中の子供</h2><p><b>まなぶ</b>（5年）</p>
+  <div class="card"><h2>👪 連携中の子供</h2>
+    <p><b>まなぶ</b>（5年）</p>
+    <p><b>ゆうき</b>（3年）</p>
+    <p><b>あやの</b>（1年）</p>
     <button class="btn" onclick="go('p_selchild')">進み具合を見る</button></div>
   ${item("p_children","子供の管理","子供の追加・連携解除")}
   ${item("p_consent","📊 統計データ提供への同意","子供ごとに設定")}
@@ -840,8 +864,8 @@ function tmplQA(t, vals){
   return {q: t.text(v), a};
 }
 function curTmpl(){ const u = S.unit || "分数のたし算"; return TMPLS[u][S.tmplSel || 0]; }
-function pickUnit(u){ S.unit = u; S.tmplSel = 0; S.tmplVals = [...TMPLS[u][0].def]; S.qSel = tmplQA(TMPLS[u][0]); go("t_tmpl"); }
-function pickTmpl(i){ const u = S.unit || "分数のたし算"; S.tmplSel = i; S.tmplVals = [...TMPLS[u][i].def]; S.qSel = tmplQA(TMPLS[u][i]); render(); }
+function pickUnit(u){ S.qFrom = "t_tmpl"; S.unit = u; S.tmplSel = 0; S.tmplVals = [...TMPLS[u][0].def]; S.qSel = tmplQA(TMPLS[u][0]); go("t_tmpl"); }
+function pickTmpl(i){ S.qFrom = "t_tmpl"; const u = S.unit || "分数のたし算"; S.tmplSel = i; S.tmplVals = [...TMPLS[u][i].def]; S.qSel = tmplQA(TMPLS[u][i]); render(); }
 function setVal(i, el){
   let x = parseFloat(el.value);
   if(isNaN(x)) x = 0;
@@ -852,7 +876,7 @@ function setVal(i, el){
   S.qSel = tmplQA(t, S.tmplVals);
   render();
 }
-function pickQ(q, a){ S.qSel = {q, a}; go("t_qconfirm"); }
+function pickQ(q, a){ S.qFrom = "t_searchres"; S.qSel = {q, a}; go("t_qconfirm"); }
 def("t_method","問題提供方法の選択","先生",`
   <h2 class="pagehead">問題の作り方を選んでください</h2>
   ${item("t_unit","📚 単元テンプレートから作る","単元を選んでテンプレートを使う")}
@@ -909,7 +933,7 @@ def("t_qconfirm","問題確認","先生",()=>{
     <p style="font-size:17px">${t.q}</p>
     <p class="muted">答え：${t.a} ／ 過程の公開：あり（答えは伏せる）</p>
     <button class="btn" onclick="go('t_provdetail')">提供の詳細へ進む</button>
-    <button class="btn sub" onclick="back()">直す</button></div>`;
+    <button class="btn sub" onclick="fixBack()">直す</button></div>`;
 });
 def("t_provdetail","提供詳細確認","先生",`
   <div class="card"><h2>提供の詳細</h2>
