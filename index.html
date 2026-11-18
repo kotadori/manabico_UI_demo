@@ -124,6 +124,13 @@
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   td,th{border-bottom:1px solid var(--line);padding:9px 4px;text-align:left}
   tr:last-child td{border-bottom:0}
+  .chart{display:flex;align-items:flex-end;gap:5px;height:104px;margin-top:10px}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+  .chart .v{font-size:10.5px;color:var(--sub)}
+  .chart .b{width:68%;background:#bcd6f7;border-radius:4px 4px 0 0}
+  .chart .b.today{background:var(--blue)}
+  .chart .d{font-size:10.5px;color:var(--sub)}
+  .chart .d.today{color:var(--blue);font-weight:700}
 </style>
 </head>
 <body>
@@ -281,7 +288,7 @@ const FLOW = new Set([
   "s_answer","s_ansdone","s_reflect","s_procview","s_procpost","s_postdone",
   "s_quizans","s_quizdone","s_knowview","s_reportchk","s_reportdone",
   "s_reclist","s_edit","s_agenthist","s_qr","s_chgdone","s_inqdone",
-  "p_qr","p_confirm","p_regdone","p_selunit","p_progress","p_consentsel","p_addchild","p_unlinkdone",
+  "p_qr","p_confirm","p_regdone","p_progress","p_consentsel","p_addchild","p_unlinkdone",
   "t_unit","t_tmpl","t_search","t_searchres","t_qconfirm","t_provdetail","t_provdone",
   "t_classdetail","t_stusearch","t_classsetdone","t_statusdetail","t_noticedetail",
   "a_members","a_memberdetail","a_stop","a_posts","a_postdetail","a_reportdetail",
@@ -752,13 +759,25 @@ def("p_home","保護者ホーム","保護者",`
 `);
 def("p_selchild","子供選択","保護者",`
   <h2 class="pagehead">どの子供の進み具合を見ますか</h2>
-  ${item("p_selunit","まなぶ（5年）","今週の学習あり")}
-  ${item("p_selunit","ゆうき（3年）","今週の学習あり")}
-  ${item("p_selunit","あやの（1年）","今週の学習あり")}
+  ${item("p_timeconfirm","まなぶ（5年）","今週の学習あり")}
+  ${item("p_timeconfirm","ゆうき（3年）","今週の学習あり")}
+  ${item("p_timeconfirm","あやの（1年）","今週の学習あり")}
   <button class="btn sub" onclick="back()">もどる</button>
 `);
-def("p_selunit","単元選択","保護者",`
-  <h2 class="pagehead">単元を選んでください</h2>
+def("p_timeconfirm","利用時間確認","保護者",`
+  <div class="card"><h2>まなぶの利用時間</h2>
+    <div class="rowline"><span>今週の合計</span><b>4時間40分</b></div>
+    <div class="rowline"><span>1日の平均</span><b>40分</b></div>
+    <div class="chart">
+      <div class="col"><span class="v">30</span><div class="b" style="height:50%"></div><span class="d">月</span></div>
+      <div class="col"><span class="v">45</span><div class="b" style="height:75%"></div><span class="d">火</span></div>
+      <div class="col"><span class="v">20</span><div class="b today" style="height:33%"></div><span class="d today">水</span></div>
+      <div class="col"><span class="v">50</span><div class="b" style="height:83%"></div><span class="d">木</span></div>
+      <div class="col"><span class="v">35</span><div class="b" style="height:58%"></div><span class="d">金</span></div>
+      <div class="col"><span class="v">60</span><div class="b" style="height:100%"></div><span class="d">土</span></div>
+      <div class="col"><span class="v">40</span><div class="b" style="height:67%"></div><span class="d">日</span></div>
+    </div></div>
+  <h2 class="pagehead">単元</h2>
   ${item("p_progress","算数：分数のたし算","取り組み中")}
   ${item("p_progress","国語：漢字の読み","完了")}
   <button class="btn sub" onclick="back()">もどる</button>
@@ -771,7 +790,6 @@ def("p_progress","進み具合確認","保護者",`
     <p class="muted">答えそのものや，他の子の投稿は表示されません．</p>
     <button class="btn sub" onclick="jump('p_home')">ホームへ</button></div>
 `);
-function setLimit(v){ S.timeLimit=v; document.querySelectorAll("#tlSeg button").forEach(b=>b.classList.toggle("on", b.textContent===v)); }
 def("p_consent","同意管理","保護者",`
   <div class="card"><h2>統計データ提供への同意</h2>
     <p class="muted">学習の統計データ（個人が分からない形にした集計）を，外部へ提供することへの同意です．子供ごとに決められます．</p></div>
